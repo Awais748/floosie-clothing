@@ -1,8 +1,10 @@
 import Product from "../models/ProductModel.js";
 
 export const createProduct = async (req, res) => {
+  console.log("CREATE_PRODUCT: Request received", { body: req.body });
   try {
     const product = await Product.create(req.body);
+    console.log("CREATE_PRODUCT: Product created successfully", product);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
     console.error("CREATE_PRODUCT_ERROR:", error);
@@ -13,24 +15,22 @@ export const createProduct = async (req, res) => {
 };
 
 export const getAllProducts = async (req, res) => {
+  console.log("GET_ALL_PRODUCTS: Request received");
   try {
     const products = await Product.find();
-
-    res.status(200).json({
-      success: true,
-      data: products,
-    });
+    console.log(`GET_ALL_PRODUCTS: Found ${products.length} products`);
+    res.status(200).json({ success: true, data: products });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    console.error("GET_ALL_PRODUCTS_ERROR:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const getHomeProducts = async (req, res) => {
+  console.log("GET_HOME_PRODUCTS: Request received");
   try {
     const LIMIT = 4;
+    console.log("GET_HOME_PRODUCTS: Fetching all sections with limit", LIMIT);
 
     const [NewArrivals, CustomerFav, Kohinoor, FlossieExecutive, Dastaan] =
       await Promise.all([
@@ -53,15 +53,17 @@ export const getHomeProducts = async (req, res) => {
           .lean(),
       ]);
 
+    console.log("GET_HOME_PRODUCTS: Sections fetched", {
+      NewArrivals: NewArrivals.length,
+      CustomerFav: CustomerFav.length,
+      Kohinoor: Kohinoor.length,
+      FlossieExecutive: FlossieExecutive.length,
+      Dastaan: Dastaan.length,
+    });
+
     res.status(200).json({
       success: true,
-      data: {
-        NewArrivals,
-        CustomerFav,
-        Kohinoor,
-        FlossieExecutive,
-        Dastaan,
-      },
+      data: { NewArrivals, CustomerFav, Kohinoor, FlossieExecutive, Dastaan },
     });
   } catch (error) {
     console.error("HOME_API_ERROR:", error);
@@ -72,13 +74,18 @@ export const getHomeProducts = async (req, res) => {
 };
 
 export const getProductById = async (req, res) => {
+  console.log("GET_PRODUCT_BY_ID: Request received", { id: req.params.id });
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
+      console.warn("GET_PRODUCT_BY_ID: Product not found", {
+        id: req.params.id,
+      });
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
+    console.log("GET_PRODUCT_BY_ID: Product found", product);
     res.status(200).json({ success: true, data: product });
   } catch (error) {
     console.error("GET_PRODUCT_ERROR:", error);
@@ -89,6 +96,10 @@ export const getProductById = async (req, res) => {
 };
 
 export const updateProduct = async (req, res) => {
+  console.log("UPDATE_PRODUCT: Request received", {
+    id: req.params.id,
+    body: req.body,
+  });
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -96,11 +107,13 @@ export const updateProduct = async (req, res) => {
     }).lean();
 
     if (!product) {
+      console.warn("UPDATE_PRODUCT: Product not found", { id: req.params.id });
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
 
+    console.log("UPDATE_PRODUCT: Product updated successfully", product);
     res.status(200).json({ success: true, data: product });
   } catch (error) {
     console.error("UPDATE_PRODUCT_ERROR:", error);
@@ -111,14 +124,16 @@ export const updateProduct = async (req, res) => {
 };
 
 export const deleteProduct = async (req, res) => {
+  console.log("DELETE_PRODUCT: Request received", { id: req.params.id });
   try {
     const product = await Product.findByIdAndDelete(req.params.id).lean();
     if (!product) {
+      console.warn("DELETE_PRODUCT: Product not found", { id: req.params.id });
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
-    console.log(product);
+    console.log("DELETE_PRODUCT: Product deleted successfully", product);
     res
       .status(200)
       .json({ success: true, message: "Product deleted successfully" });

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 
 export const fetchProducts = createAsyncThunk(
   "product/fetchProducts",
@@ -10,16 +10,23 @@ export const fetchProducts = createAsyncThunk(
       const res = await axios.get(`${API_URL}/api/products/getallproduct`, {
         params,
       });
-      console.log("API Response:", res.data); // <- check karo
+      console.log("FETCH_PRODUCTS: Success", { total: res.data?.data?.length });
       return { data: res.data, params };
     } catch (err) {
-      return thunkAPI.rejectWithValue("Failed to fetch products", err);
+      console.error(
+        "FETCH_PRODUCTS: Failed",
+        err.response?.data || err.message
+      );
+      return thunkAPI.rejectWithValue("Failed to fetch products");
     }
   },
   {
     condition: (params, { getState }) => {
       const { lastQuery } = getState().product;
-      if (JSON.stringify(lastQuery) === JSON.stringify(params)) return false;
+      if (JSON.stringify(lastQuery) === JSON.stringify(params)) {
+        console.log("FETCH_PRODUCTS: Skipped — same query already loaded");
+        return false;
+      }
     },
   }
 );
@@ -29,9 +36,14 @@ export const fetchProductById = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const res = await axios.get(`${API_URL}/api/products/${id}`);
+      console.log("FETCH_PRODUCT_BY_ID: Success", { id });
       return res.data.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue("Failed to fetch product", err);
+      console.error("FETCH_PRODUCT_BY_ID: Failed", {
+        id,
+        error: err.response?.data || err.message,
+      });
+      return thunkAPI.rejectWithValue("Failed to fetch product");
     }
   }
 );
@@ -44,9 +56,14 @@ export const createProduct = createAsyncThunk(
       const res = await axios.post(`${API_URL}/api/products`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("CREATE_PRODUCT: Success", { id: res.data.data?._id });
       return res.data.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue("Failed to create product", err);
+      console.error(
+        "CREATE_PRODUCT: Failed",
+        err.response?.data || err.message
+      );
+      return thunkAPI.rejectWithValue("Failed to create product");
     }
   }
 );
@@ -59,16 +76,18 @@ export const updateProduct = createAsyncThunk(
       const res = await axios.put(`${API_URL}/api/products/${id}`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("UPDATE_PRODUCT: Success", { id });
       return res.data.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue("Failed to update product", err);
+      console.error("UPDATE_PRODUCT: Failed", {
+        id,
+        error: err.response?.data || err.message,
+      });
+      return thunkAPI.rejectWithValue("Failed to update product");
     }
   }
 );
 
-/* ─────────────────────────────────────────────
-   DELETE PRODUCT (Admin)
-───────────────────────────────────────────── */
 export const deleteProduct = createAsyncThunk(
   "product/delete",
   async (id, thunkAPI) => {
@@ -77,9 +96,14 @@ export const deleteProduct = createAsyncThunk(
       await axios.delete(`${API_URL}/api/products/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return id; // return deleted id to remove from state
+      console.log("DELETE_PRODUCT: Success", { id });
+      return id;
     } catch (err) {
-      return thunkAPI.rejectWithValue("Failed to delete product", err);
+      console.error("DELETE_PRODUCT: Failed", {
+        id,
+        error: err.response?.data || err.message,
+      });
+      return thunkAPI.rejectWithValue("Failed to delete product");
     }
   }
 );
@@ -89,9 +113,14 @@ export const fetchHomeProducts = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await axios.get(`${API_URL}/api/products/home`);
+      console.log("FETCH_HOME_PRODUCTS: Success");
       return res.data.data;
     } catch (err) {
-      return thunkAPI.rejectWithValue("Failed to fetch home products", err);
+      console.error(
+        "FETCH_HOME_PRODUCTS: Failed",
+        err.response?.data || err.message
+      );
+      return thunkAPI.rejectWithValue("Failed to fetch home products");
     }
   }
 );
@@ -104,7 +133,6 @@ const productSlice = createSlice({
     page: 1,
     totalPages: 1,
     totalProducts: 0,
-
     homeCollections: {
       NewArrivals: [],
       CustomerFav: [],
@@ -114,7 +142,6 @@ const productSlice = createSlice({
       Velvet: [],
       Dastaan: [],
     },
-
     lastQuery: null,
     loading: false,
     listLoading: false,
@@ -134,15 +161,14 @@ const productSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-      /* ── FETCH ALL ── */
       .addCase(fetchProducts.pending, (state) => {
         state.listLoading = true;
         state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.listLoading = false;
-        const resData = action.payload.data; // { success, data: [...], total, pages, page }
-        state.products = resData.data ?? resData; // actual array
+        const resData = action.payload.data;
+        state.products = resData.data ?? resData;
         state.totalProducts = resData.total ?? resData.data?.length ?? 0;
         state.totalPages = resData.pages ?? 1;
         state.page = resData.page ?? 1;
@@ -151,6 +177,7 @@ const productSlice = createSlice({
       .addCase(fetchProducts.rejected, (state, action) => {
         state.listLoading = false;
         state.error = action.payload;
+        console.error("FETCH_PRODUCTS: State error set", action.payload);
       })
 
       .addCase(fetchProductById.pending, (state) => {
@@ -164,6 +191,7 @@ const productSlice = createSlice({
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        console.error("FETCH_PRODUCT_BY_ID: State error set", action.payload);
       })
 
       .addCase(createProduct.pending, (state) => {
@@ -171,12 +199,13 @@ const productSlice = createSlice({
       })
       .addCase(createProduct.fulfilled, (state, action) => {
         state.loading = false;
-        state.products.unshift(action.payload); // prepend to list
+        state.products.unshift(action.payload);
         state.message = "Product created successfully";
       })
       .addCase(createProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        console.error("CREATE_PRODUCT: State error set", action.payload);
       })
 
       .addCase(updateProduct.pending, (state) => {
@@ -196,6 +225,7 @@ const productSlice = createSlice({
       .addCase(updateProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        console.error("UPDATE_PRODUCT: State error set", action.payload);
       })
 
       .addCase(deleteProduct.pending, (state) => {
@@ -209,6 +239,7 @@ const productSlice = createSlice({
       .addCase(deleteProduct.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        console.error("DELETE_PRODUCT: State error set", action.payload);
       })
 
       .addCase(fetchHomeProducts.pending, (state) => {
@@ -221,6 +252,7 @@ const productSlice = createSlice({
       .addCase(fetchHomeProducts.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        console.error("FETCH_HOME_PRODUCTS: State error set", action.payload);
       });
   },
 });

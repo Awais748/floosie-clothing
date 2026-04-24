@@ -1,21 +1,36 @@
 import nodemailer from "nodemailer";
 
 export const sendEmail = async (to, subject, text, html) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
+  const transport = nodemailer.createTransport({
+    host: "sandbox.smtp.mailtrap.io",
+    port: 2525,
     auth: {
-      user: process.env.SMTP_EMAIL,
-      pass: process.env.SMTP_PASSWORD,
+      user: process.env.MAILTRAP_USER,
+      pass: process.env.MAILTRAP_PASS,
     },
   });
 
-  const mailOptions = {
-    from: `${process.env.SITE_NAME || "FLOSSIE"} <${process.env.SMTP_EMAIL}>`,
-    to,
-    subject,
-    text,
-    html,
-  };
+  console.log("SEND_EMAIL: Attempting to send", { to, subject });
+  console.log("SEND_EMAIL: Credentials check", {
+    user: process.env.MAILTRAP_USER,
+    pass: process.env.MAILTRAP_PASS ? "✅ loaded" : "❌ missing",
+  });
 
-  await transporter.sendMail(mailOptions);
+  try {
+    const info = await transport.sendMail({
+      from: '"FLOSSIE" <hello@flossie.com>',
+      to,
+      subject,
+      text,
+      html,
+    });
+    console.log("SEND_EMAIL: Sent successfully", {
+      to,
+      messageId: info.messageId,
+    });
+    return info;
+  } catch (error) {
+    console.error("SEND_EMAIL: Failed", { to, error: error.message });
+    throw error;
+  }
 };

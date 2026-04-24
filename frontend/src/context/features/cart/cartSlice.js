@@ -4,7 +4,6 @@ import axios from "axios";
 const API = import.meta.env.VITE_BACKEND_URL;
 const CART_KEY = "cart_items";
 
-// ── LocalStorage helpers ──────────────────────────────
 const loadLocal = () => {
   try {
     return JSON.parse(localStorage.getItem(CART_KEY)) || [];
@@ -16,12 +15,10 @@ const saveLocal = (items) =>
   localStorage.setItem(CART_KEY, JSON.stringify(items));
 const clearLocal = () => localStorage.removeItem(CART_KEY);
 
-// ── Auth header ───────────────────────────────────────
 const authHeader = (token) => ({
   headers: { Authorization: `Bearer ${token}` },
 });
 
-// ── Find item index by productId + size + color ───────
 const findIdx = (items, { productId, size, color }) =>
   items.findIndex(
     (i) =>
@@ -30,43 +27,53 @@ const findIdx = (items, { productId, size, color }) =>
       (i.color || null) === (color || null)
   );
 
-// ─────────────────────────────────────────────────────
-// THUNKS  (all background DB sync — UI already updated)
-// ─────────────────────────────────────────────────────
-
 export const fetchCart = createAsyncThunk("cart/fetch", async (_, api) => {
   const token = api.getState().user.token;
-  if (!token) return [];
-  const res = await axios.get(`${API}/api/cart/`, authHeader(token));
-  return res.data.items || [];
+  if (!token) {
+    console.warn("FETCH_CART: No token — skipping");
+    return [];
+  }
+  try {
+    const res = await axios.get(`${API}/api/cart/`, authHeader(token));
+    console.log("FETCH_CART: Success", { count: res.data.items?.length });
+    return res.data.items || [];
+  } catch (err) {
+    console.error("FETCH_CART: Failed", err.message);
+    throw err;
+  }
 });
 
 export const syncCartDb = createAsyncThunk(
   "cart/sync",
   async (localItems, api) => {
     const token = api.getState().user.token;
-    if (!token) return [];
-    const res = await axios.post(
-      `${API}/api/cart/sync`,
-      { localItems },
-      authHeader(token)
-    );
-    return res.data.items || [];
+    if (!token) {
+      console.warn("SYNC_CART: No token — skipping");
+      return [];
+    }
+    try {
+      const res = await axios.post(
+        `${API}/api/cart/sync`,
+        { localItems },
+        authHeader(token)
+      );
+      console.log("SYNC_CART: Success", { count: res.data.items?.length });
+      return res.data.items || [];
+    } catch (err) {
+      console.error("SYNC_CART: Failed", err.message);
+      throw err;
+    }
   }
 );
 
-// Simple background sync helpers (fire-and-forget, errors are non-critical)
 const bgSync = async (fn) => {
   try {
     await fn();
   } catch (err) {
-    console.warn("Cart DB sync failed:", err.message);
+    console.warn("CART: DB sync failed (non-critical)", err.message);
   }
 };
 
-// ─────────────────────────────────────────────────────
-// SLICE
-// ─────────────────────────────────────────────────────
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
@@ -91,8 +98,17 @@ const cartSlice = createSlice({
       const idx = findIdx(state.items, payload);
       if (idx > -1) {
         state.items[idx].quantity += payload.quantity || 1;
+        console.log("ADD_TO_CART: Quantity updated", {
+          productId: payload.productId,
+          quantity: state.items[idx].quantity,
+        });
       } else {
         state.items.push({ ...payload, quantity: payload.quantity || 1 });
+        console.log("ADD_TO_CART: New item added", {
+          productId: payload.productId,
+          size: payload.size,
+          color: payload.color,
+        });
       }
       saveLocal(state.items);
       state.isOpen = true;
@@ -109,6 +125,7 @@ const cartSlice = createSlice({
           )
       );
       saveLocal(state.items);
+      console.log("REMOVE_FROM_CART: Item removed", { productId, size, color });
     },
 
     updateQuantity: (state, { payload }) => {
@@ -118,8 +135,10 @@ const cartSlice = createSlice({
 
       if (quantity <= 0) {
         state.items.splice(idx, 1);
+        console.log("UPDATE_QUANTITY: Item removed (qty 0)", { productId });
       } else {
         state.items[idx].quantity = quantity;
+        console.log("UPDATE_QUANTITY: Updated", { productId, quantity });
       }
       saveLocal(state.items);
     },
@@ -128,6 +147,7 @@ const cartSlice = createSlice({
       state.items = [];
       state.isOpen = false;
       clearLocal();
+      console.log("CLEAR_CART: Cart cleared");
     },
   },
 
@@ -144,6 +164,7 @@ const cartSlice = createSlice({
       .addCase(fetchCart.rejected, (state, { error }) => {
         state.loading = false;
         state.error = error.message;
+        console.error("FETCH_CART: State error set", error.message);
       })
       .addCase(syncCartDb.fulfilled, (state, { payload }) => {
         state.items = payload;
@@ -153,6 +174,7 @@ const cartSlice = createSlice({
         state.items = [];
         state.isOpen = false;
         clearLocal();
+        console.log("CART: Cleared on logout");
       });
   },
 });
@@ -165,16 +187,11 @@ export const {
   removeFromCart,
   updateQuantity,
   clearCart,
-  resetCart, // alias for clearCart — backward compat
+  resetCart,
 } = cartSlice.actions;
-
-// ─────────────────────────────────────────────────────
-// ACTION CREATORS  (optimistic UI + background DB sync)
-// ─────────────────────────────────────────────────────
 
 export const addToCartAction = (item) => (dispatch, getState) => {
   dispatch(addToCart(item));
-
   const token = getState().user.token;
   if (token) {
     bgSync(() => axios.post(`${API}/api/cart/add`, item, authHeader(token)));
@@ -185,7 +202,6 @@ export const removeFromCartAction =
   ({ productId, size, color }) =>
   (dispatch, getState) => {
     dispatch(removeFromCart({ productId, size, color }));
-
     const token = getState().user.token;
     if (token) {
       bgSync(() =>
@@ -201,7 +217,6 @@ export const updateQuantityAction =
   ({ productId, size, color, quantity }) =>
   (dispatch, getState) => {
     dispatch(updateQuantity({ productId, size, color, quantity }));
-
     const token = getState().user.token;
     if (token) {
       bgSync(() =>
@@ -216,7 +231,6 @@ export const updateQuantityAction =
 
 export const clearCartAction = () => (dispatch, getState) => {
   dispatch(clearCart());
-
   const token = getState().user.token;
   if (token) {
     bgSync(() => axios.delete(`${API}/api/cart/clear`, authHeader(token)));
