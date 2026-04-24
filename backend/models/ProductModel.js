@@ -22,7 +22,6 @@ const productSchema = new Schema(
   { timestamps: true }
 );
 
-// ⚡ Targeted indexes — MongoDB picks best one per query
 productSchema.index({ category: 1, createdAt: -1 });
 productSchema.index({ isNewArrival: 1, createdAt: -1 });
 productSchema.index({ isCustomerFavorite: 1 });

@@ -1,25 +1,42 @@
 import User from "../models/UserModel.js";
 import mongoose from "mongoose";
 
-const toObjId = (id) => new mongoose.Types.ObjectId(id);
-const isValidId = (id) => id && mongoose.Types.ObjectId.isValid(id);
+const toObjId = (id) => {
+  console.log("Converting to ObjectId:", id);
+  return new mongoose.Types.ObjectId(id);
+};
 
-// GET /api/cart/
+const isValidId = (id) => {
+  const valid = id && mongoose.Types.ObjectId.isValid(id);
+  console.log("Checking ID valid:", id, "=>", valid);
+  return valid;
+};
+
 export const getCart = async (req, res) => {
+  console.log("GET CART API CALLED");
+
   try {
+    console.log("User ID:", req.user._id);
+
     const user = await User.findById(req.user._id).select("cart").lean();
+    console.log("User Cart Data:", user);
+
     if (!user)
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
+
     res.json({ success: true, items: user.cart || [] });
   } catch (err) {
+    console.error("Error in getCart:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// POST /api/cart/add
 export const addToCart = async (req, res) => {
+  console.log("ADD TO CART API CALLED");
+  console.log("Request Body:", req.body);
+
   const {
     productId,
     quantity = 1,
@@ -42,8 +59,11 @@ export const addToCart = async (req, res) => {
   const sizeVal = size || null;
   const colorVal = color || null;
 
+  console.log("Processed Values:", { pid, qty, sizeVal, colorVal });
+
   try {
-    // If item already in cart → increment quantity
+    console.log("Trying to update existing item...");
+
     const updated = await User.findOneAndUpdate(
       {
         _id: req.user._id,
@@ -55,8 +75,11 @@ export const addToCart = async (req, res) => {
       { new: false, lean: true, projection: { _id: 1 } }
     );
 
-    // Else → push new item
+    console.log("Update Result:", updated);
+
     if (!updated) {
+      console.log("Item not found → pushing new item");
+
       await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -80,12 +103,16 @@ export const addToCart = async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
+    console.error("Error in addToCart:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// PUT /api/cart/update
+// UPDATE QUANTITY
 export const updateQuantity = async (req, res) => {
+  console.log("UPDATE QUANTITY API CALLED");
+  console.log("Request Body:", req.body);
+
   const { productId, size, color, quantity } = req.body;
 
   if (!isValidId(productId))
@@ -99,13 +126,16 @@ export const updateQuantity = async (req, res) => {
 
   try {
     if (Number(quantity) <= 0) {
-      // Remove item if quantity hits 0
+      console.log("Quantity <= 0 → removing item");
+
       await User.findByIdAndUpdate(
         req.user._id,
         { $pull: { cart: { productId: pid, size: sizeVal, color: colorVal } } },
         { lean: true, projection: { _id: 1 } }
       );
     } else {
+      console.log("Updating quantity to:", quantity);
+
       await User.findOneAndUpdate(
         {
           _id: req.user._id,
@@ -117,14 +147,19 @@ export const updateQuantity = async (req, res) => {
         { lean: true, projection: { _id: 1 } }
       );
     }
+
     res.json({ success: true });
   } catch (err) {
+    console.error("Error in updateQuantity:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// DELETE /api/cart/remove/:productId
 export const removeFromCart = async (req, res) => {
+  console.log("REMOVE FROM CART API CALLED");
+  console.log("Params:", req.params);
+  console.log("Query:", req.query);
+
   const { productId } = req.params;
   const { size, color } = req.query;
 
@@ -147,44 +182,62 @@ export const removeFromCart = async (req, res) => {
       },
       { lean: true, projection: { _id: 1 } }
     );
+
+    console.log("Item removed");
+
     res.json({ success: true });
   } catch (err) {
+    console.error("Error in removeFromCart:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// DELETE /api/cart/clear
 export const clearCart = async (req, res) => {
+  console.log("CLEAR CART API CALLED");
+
   try {
     await User.findByIdAndUpdate(
       req.user._id,
       { $set: { cart: [] } },
       { lean: true, projection: { _id: 1 } }
     );
+
+    console.log("Cart cleared");
+
     res.json({ success: true, message: "Cart cleared" });
   } catch (err) {
+    console.error("Error in clearCart:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-// POST /api/cart/sync  (login pe guest cart → DB merge)
+// SYNC CART
 export const syncCart = async (req, res) => {
+  console.log("SYNC CART API CALLED");
+  console.log("Local Items:", req.body.localItems);
+
   const { localItems } = req.body;
 
-  // No local items → just return DB cart
   if (!Array.isArray(localItems) || localItems.length === 0) {
+    console.log("No local items → returning DB cart");
+
     const user = await User.findById(req.user._id).select("cart").lean();
     return res.json({ success: true, items: user?.cart || [] });
   }
 
   try {
+    console.log("Merging local cart with DB...");
+
     const bulkOps = localItems
       .filter((item) => isValidId(item.productId || item._id))
       .flatMap((item) => {
+        console.log("Processing item:", item);
+
         const pid = toObjId(item.productId || item._id);
         const qty = Number(item.quantity) || 1;
         const sizeVal = item.size || null;
         const colorVal = item.color || null;
+
         const cartItem = {
           productId: pid,
           quantity: qty,
@@ -198,7 +251,6 @@ export const syncCart = async (req, res) => {
         };
 
         return [
-          // If item exists → increment qty
           {
             updateOne: {
               filter: {
@@ -210,7 +262,6 @@ export const syncCart = async (req, res) => {
               update: { $inc: { "cart.$.quantity": qty } },
             },
           },
-          // If item doesn't exist → push
           {
             updateOne: {
               filter: {
@@ -231,11 +282,17 @@ export const syncCart = async (req, res) => {
         ];
       });
 
+    console.log("Bulk Operations:", bulkOps);
+
     await User.bulkWrite(bulkOps, { ordered: false });
 
     const user = await User.findById(req.user._id).select("cart").lean();
+
+    console.log("Final Cart:", user?.cart);
+
     res.json({ success: true, items: user?.cart || [] });
   } catch (err) {
+    console.error("Error in syncCart:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

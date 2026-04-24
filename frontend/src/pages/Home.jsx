@@ -26,31 +26,31 @@ const Home = memo(() => {
         title: "New Arrivals",
         subtitle: "Fresh Drops",
         data: homeCollections.NewArrivals,
-        link: "/new-arrival", // ✅ Navbar se match
+        link: "/new-arrival", 
       },
       {
         title: "Dastaan Heritage",
         subtitle: "A Traditional Story",
         data: homeCollections.Dastaan,
-        link: "/dastaan", // ✅ Fix: /collections/dastaan → /dastaan
+        link: "/dastaan", 
       },
       {
         title: "Kohinoor Collection",
         subtitle: "Timeless Elegance",
         data: homeCollections.Kohinoor,
-        link: "/kohinoor", // ✅ Fix: /collections/kohinoor → /kohinoor
+        link: "/kohinoor", 
       },
       {
         title: "Flossie Executive",
         subtitle: "Modern Professional",
         data: homeCollections.FlossieExecutive,
-        link: "/flossie-executive", // ✅ Fix: /collections/flossie-executive → /flossie-executive
+        link: "/flossie-executive", 
       },
       {
         title: "Customer Favorites",
         subtitle: "Restocked — Most Loved",
         data: homeCollections.CustomerFav,
-        link: "/customer-fav", // ✅ Navbar se match
+        link: "/customer-fav", 
       },
     ],
     [homeCollections]
@@ -84,7 +84,6 @@ const Home = memo(() => {
         ))}
       </div>
 
-      {/* Footer Feature Strip */}
       <section className="bg-stone-900 py-20 px-4 mt-24">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
           {[

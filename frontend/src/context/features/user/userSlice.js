@@ -1,28 +1,31 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 
 export const register = createAsyncThunk(
   "user/register",
   async (data, thunkAPI) => {
     try {
       const res = await axios.post(`${API_URL}/api/users/register`, data);
+      console.log("REGISTER: Success", { Email: data.Email });
       return res.data;
     } catch (err) {
+      console.error("REGISTER: Failed", err.response?.data?.message);
       return thunkAPI.rejectWithValue(err.response.data.message);
     }
   }
 );
 
 export const login = createAsyncThunk("user/login", async (data, thunkAPI) => {
-  console.log("data in login", data);
-  console.log("before ");
   try {
-    console.log("try ");
     const res = await axios.post(`${API_URL}/api/users/login`, data);
-    console.log("response------------------------- ", res);
+    console.log("LOGIN: Success", {
+      Email: data.Email,
+      role: res.data.user?.role,
+    });
     return res.data;
   } catch (err) {
+    console.error("LOGIN: Failed", err.response?.data?.message);
     return thunkAPI.rejectWithValue(err.response.data.message);
   }
 });
@@ -34,8 +37,10 @@ export const forgotPassword = createAsyncThunk(
       const res = await axios.post(`${API_URL}/api/users/forgot-password`, {
         Email: email,
       });
+      console.log("FORGOT_PASSWORD: OTP sent", { email });
       return res.data;
     } catch (err) {
+      console.error("FORGOT_PASSWORD: Failed", err.response?.data?.message);
       return thunkAPI.rejectWithValue(err.response.data.message);
     }
   }
@@ -46,8 +51,10 @@ export const resetPassword = createAsyncThunk(
   async (data, thunkAPI) => {
     try {
       const res = await axios.post(`${API_URL}/api/users/reset-password`, data);
+      console.log("RESET_PASSWORD: Success", { Email: data.Email });
       return res.data;
     } catch (err) {
+      console.error("RESET_PASSWORD: Failed", err.response?.data?.message);
       return thunkAPI.rejectWithValue(err.response.data.message);
     }
   }
@@ -61,8 +68,10 @@ export const updateProfile = createAsyncThunk(
       const res = await axios.put(`${API_URL}/api/users/profile`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("UPDATE_PROFILE: Success");
       return res.data;
     } catch (err) {
+      console.error("UPDATE_PROFILE: Failed", err.response?.data?.message);
       return thunkAPI.rejectWithValue(err.response.data.message);
     }
   }
@@ -76,8 +85,10 @@ export const fetchUserOrders = createAsyncThunk(
       const res = await axios.get(`${API_URL}/api/users/orders`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("FETCH_USER_ORDERS: Success", { count: res.data?.length });
       return res.data;
     } catch (err) {
+      console.error("FETCH_USER_ORDERS: Failed", err.response?.data?.message);
       return thunkAPI.rejectWithValue(err.response.data.message);
     }
   }
@@ -91,14 +102,17 @@ export const fetchAllOrders = createAsyncThunk(
       const res = await axios.get(`${API_URL}/api/users/all-orders`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("FETCH_ALL_ORDERS: Success", {
+        count: res.data.orders?.length,
+      });
       return res.data.orders;
     } catch (err) {
+      console.error("FETCH_ALL_ORDERS: Failed", err.response?.data?.message);
       return thunkAPI.rejectWithValue(err.response.data.message);
     }
   }
 );
 
-// ✅ FIXED: was using undefined `api`, now uses axios + local state patch (no refetch)
 export const updateOrderStatus = createAsyncThunk(
   "user/updateOrderStatus",
   async ({ userId, orderId, status }, thunkAPI) => {
@@ -112,9 +126,16 @@ export const updateOrderStatus = createAsyncThunk(
       if (!res.data.success) {
         return thunkAPI.rejectWithValue(res.data.message || "Update failed");
       }
-      // Return orderId + normalised status so reducer patches state directly
+      console.log("UPDATE_ORDER_STATUS: Success", {
+        orderId,
+        status: res.data.updatedOrder.status,
+      });
       return { orderId, status: res.data.updatedOrder.status };
     } catch (err) {
+      console.error(
+        "UPDATE_ORDER_STATUS: Failed",
+        err.response?.data?.message || "Network error"
+      );
       return thunkAPI.rejectWithValue(
         err.response?.data?.message || "Network error"
       );
@@ -220,5 +241,4 @@ const userSlice = createSlice({
 });
 
 export const { logout, resetStatus, addOrder } = userSlice.actions;
-
 export default userSlice.reducer;
