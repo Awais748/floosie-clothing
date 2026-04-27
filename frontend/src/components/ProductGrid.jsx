@@ -1,4 +1,4 @@
-import React, { useEffect, memo, useRef } from "react";
+import React, { useEffect, memo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../context/features/product/productSlice";
 import { Link } from "react-router-dom";
@@ -26,20 +26,24 @@ const ProductGrid = memo(
     hideHero,
   }) => {
     const dispatch = useDispatch();
-    const { products: reduxProducts, listLoading } = useSelector(
-      (state) => state.product
-    );
+    const {
+      products: reduxProducts,
+      listLoading,
+      page,
+      totalPages,
+    } = useSelector((state) => state.product);
 
-    const products = customProducts || reduxProducts;
+    const products = customProducts ?? reduxProducts;
 
-    const didFetchRef = useRef(false);
-
+    // ⚡ page dependency add kiya — page change pe refetch hoga
     useEffect(() => {
-      if (customProducts === undefined && !didFetchRef.current) {
-        dispatch(fetchProducts({ category, customerFav, newArrival }));
-        didFetchRef.current = true;
+      if (customProducts === undefined) {
+        dispatch(
+          fetchProducts({ category, customerFav, newArrival, page, limit: 12 })
+        );
       }
-    }, [category, customerFav, newArrival, customProducts, dispatch]);
+    }, [category, customerFav, newArrival, customProducts, dispatch, page]);
+
     const pageTitle =
       title || (category ? categoryLabels[category] : "All Products");
     const pageSubtitle =
@@ -49,6 +53,19 @@ const ProductGrid = memo(
         : newArrival
         ? "Fresh drops you don't want to miss"
         : "Browse our curated selections");
+
+    const handlePageChange = (newPage) => {
+      dispatch(
+        fetchProducts({
+          category,
+          customerFav,
+          newArrival,
+          page: newPage,
+          limit: 12,
+        })
+      );
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
 
     return (
       <div
@@ -102,112 +119,150 @@ const ProductGrid = memo(
               </p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
-              {products.map((product, index) => (
-                <motion.div
-                  key={product._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="group"
-                >
-                  <Link to={`/product/${product._id}`} className="block">
-                    {/* Image */}
-                    <div className="aspect-[3/4] bg-stone-100 rounded-xl overflow-hidden relative mb-3">
-                      {product.images && product.images.length > 0 ? (
-                        <div className="relative w-full h-full group/img overflow-hidden">
-                          <img
-                            src={product.images?.[0]}
-                            alt={product.name}
-                            loading="lazy"
-                            className={`w-full h-full object-cover transition-all duration-1000 ease-out ${
-                              product.images[1]
-                                ? "group-hover:opacity-0 group-hover:scale-110"
-                                : "group-hover:scale-105"
-                            }`}
-                          />
-                          {product.images[1] && (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+                {products.map((product) => (
+                  <motion.div
+                    key={product._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="group"
+                  >
+                    <Link to={`/product/${product._id}`} className="block">
+                      <div className="aspect-[3/4] bg-stone-100 rounded-xl overflow-hidden relative mb-3">
+                        {product.images && product.images.length > 0 ? (
+                          <div className="relative w-full h-full group/img overflow-hidden">
                             <img
-                              src={product.images[1]}
-                              alt={`${product.name} alternate`}
+                              src={product.images?.[0]}
+                              alt={product.name}
                               loading="lazy"
-                              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-all duration-1000 ease-out scale-110 group-hover:scale-100"
+                              className={`w-full h-full object-cover transition-all duration-1000 ease-out ${
+                                product.images[1]
+                                  ? "group-hover:opacity-0 group-hover:scale-110"
+                                  : "group-hover:scale-105"
+                              }`}
                             />
-                          )}
-                        </div>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package size={40} className="text-stone-200" />
-                        </div>
-                      )}
-
-                      {/* Badges */}
-                      <div className="absolute top-2 left-2 flex flex-col gap-1.5">
-                        {product.isNewArrival && (
-                          <span className="bg-stone-900 text-white text-[8px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-full">
-                            New
-                          </span>
+                            {product.images[1] && (
+                              <img
+                                src={product.images[1]}
+                                alt={`${product.name} alternate`}
+                                loading="lazy"
+                                className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-all duration-1000 ease-out scale-110 group-hover:scale-100"
+                              />
+                            )}
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package size={40} className="text-stone-200" />
+                          </div>
                         )}
-                        {product.salePrice &&
-                          product.salePrice < product.price && (
-                            <span className="bg-red-500 text-white text-[8px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-full">
-                              Sale
+
+                        <div className="absolute top-2 left-2 flex flex-col gap-1.5">
+                          {product.isNewArrival && (
+                            <span className="bg-stone-900 text-white text-[8px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-full">
+                              New
                             </span>
                           )}
-                      </div>
+                          {product.salePrice &&
+                            product.salePrice < product.price && (
+                              <span className="bg-red-500 text-white text-[8px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-full">
+                                Sale
+                              </span>
+                            )}
+                        </div>
 
-                      {/* Add to Cart Hover/Touch Overlay */}
-                      <div className="absolute inset-x-2 bottom-2 md:inset-x-3 md:bottom-3 translate-y-0 md:translate-y-4 opacity-100 md:opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            dispatch(
-                              addToCart({
-                                productId: product._id,
-                                name: product.name,
-                                price: product.salePrice || product.price,
-                                originalPrice: product.price,
-                                category: product.category,
-                                image: product.images[0],
-                              })
-                            );
-                          }}
-                          className="w-full bg-white/95 text-stone-900 py-2.5 md:py-3 rounded-lg text-[9px] md:text-[10px] uppercase tracking-widest font-bold shadow-xl hover:bg-stone-900 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
-                        >
-                          <Plus size={14} className="md:size-[14px] size-3" />{" "}
-                          <span className="hidden xs:inline">Add to Cart</span>
-                          <span className="xs:hidden">Add</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="px-1">
-                      <h3 className="text-[12px] md:text-sm font-light text-stone-900 group-hover:text-stone-600 transition-colors line-clamp-1 mb-1">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        {product.salePrice &&
-                        product.salePrice < product.price ? (
-                          <>
-                            <span className="text-[12px] md:text-sm font-medium text-stone-900">
-                              Rs. {product.salePrice.toLocaleString()}
+                        <div className="absolute inset-x-2 bottom-2 md:inset-x-3 md:bottom-3 translate-y-0 md:translate-y-4 opacity-100 md:opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              dispatch(
+                                addToCart({
+                                  productId: product._id,
+                                  name: product.name,
+                                  price: product.salePrice || product.price,
+                                  originalPrice: product.price,
+                                  category: product.category,
+                                  image: product.images[0],
+                                })
+                              );
+                            }}
+                            className="w-full bg-white/95 text-stone-900 py-2.5 md:py-3 rounded-lg text-[9px] md:text-[10px] uppercase tracking-widest font-bold shadow-xl hover:bg-stone-900 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <Plus size={14} />
+                            <span className="hidden xs:inline">
+                              Add to Cart
                             </span>
-                            <span className="text-[10px] md:text-xs text-stone-400 line-through">
+                            <span className="xs:hidden">Add</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="px-1">
+                        <h3 className="text-[12px] md:text-sm font-light text-stone-900 group-hover:text-stone-600 transition-colors line-clamp-1 mb-1">
+                          {product.name}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          {product.salePrice &&
+                          product.salePrice < product.price ? (
+                            <>
+                              <span className="text-[12px] md:text-sm font-medium text-stone-900">
+                                Rs. {product.salePrice.toLocaleString()}
+                              </span>
+                              <span className="text-[10px] md:text-xs text-stone-400 line-through">
+                                Rs. {product.price.toLocaleString()}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-[12px] md:text-sm font-medium text-stone-900">
                               Rs. {product.price.toLocaleString()}
                             </span>
-                          </>
-                        ) : (
-                          <span className="text-[12px] md:text-sm font-medium text-stone-900">
-                            Rs. {product.price.toLocaleString()}
-                          </span>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* ✅ Pagination — sirf tab dikhao jab customProducts nahi aur pages 1 se zyada ho */}
+              {!customProducts && totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-10">
+                  <button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    className="px-4 py-2 text-[10px] uppercase tracking-widest font-bold border border-stone-200 rounded-lg hover:bg-stone-900 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    ← Prev
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (num) => (
+                      <button
+                        key={num}
+                        onClick={() => handlePageChange(num)}
+                        className={`w-9 h-9 text-[11px] font-bold rounded-lg border transition-all ${
+                          num === page
+                            ? "bg-stone-900 text-white border-stone-900"
+                            : "border-stone-200 hover:border-stone-900 text-stone-600"
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                    className="px-4 py-2 text-[10px] uppercase tracking-widest font-bold border border-stone-200 rounded-lg hover:bg-stone-900 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

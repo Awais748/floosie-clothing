@@ -5,66 +5,123 @@ import Product from "./models/ProductModel.js";
 
 dotenv.config();
 
-const dummyImages = [
-  "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&auto=format&fit=crop&q=60",
-  "https://images.unsplash.com/photo-1549419163-957134887b2b?w=800&auto=format&fit=crop&q=60",
-  "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&auto=format&fit=crop&q=60",
-  "https://images.unsplash.com/photo-1518002171953-a080ee802e12?w=800&auto=format&fit=crop&q=60"
+const BASE_URL = process.env.BASE_URL;
+
+const categoryImages = {
+  Kohinoor: [
+    `${BASE_URL}/uploads/koh-01.webp`,
+    `${BASE_URL}/uploads/koh-02.webp`,
+    `${BASE_URL}/uploads/koh-03.webp`,
+    `${BASE_URL}/uploads/koh-04.webp`,
+    `${BASE_URL}/uploads/kohtwo-01.webp`,
+    `${BASE_URL}/uploads/kohtwo-02.webp`,
+    `${BASE_URL}/uploads/kohtwo-03.webp`,
+    `${BASE_URL}/uploads/kohtwo-04.webp`,
+  ],
+  Dastaan: [
+    `${BASE_URL}/uploads/DA-1.webp`,
+    `${BASE_URL}/uploads/DA-02.webp`,
+    `${BASE_URL}/uploads/DA-03.webp`,
+    `${BASE_URL}/uploads/DA-04.webp`,
+    `${BASE_URL}/uploads/DAtwo-1.webp`,
+    `${BASE_URL}/uploads/DAtwo-02.webp`,
+    `${BASE_URL}/uploads/DAtwo-03.webp`,
+    `${BASE_URL}/uploads/Datwo-04.jpg`,
+  ],
+  FlossieExecutive: [
+    `${BASE_URL}/uploads/DAtwo-03.webp`,
+    `${BASE_URL}/uploads/DA-03.webp`,
+  ],
+  Safeera: [`${BASE_URL}/uploads/DA-03.webp`, `${BASE_URL}/uploads/DA-02.webp`],
+  Velvet: [
+    `${BASE_URL}/uploads/kohtwo-04.webp`,
+    `${BASE_URL}/uploads/koh-03.webp`,
+  ],
+};
+
+const customerFavImages = [
+  `${BASE_URL}/uploads/comfav-01.webp`,
+  `${BASE_URL}/uploads/comfav-02.webp`,
+  `${BASE_URL}/uploads/comfav-03.webp`,
+  `${BASE_URL}/uploads/comfav-04.webp`,
+  `${BASE_URL}/uploads/comfavtwo-01.webp`,
+  `${BASE_URL}/uploads/comfavtwo-02.webp`,
+  `${BASE_URL}/uploads/comfavtwo-03.webp`,
+  `${BASE_URL}/uploads/comfavtwo-04.webp`,
 ];
 
 const categories = [
-  { name: "Kohinoor", prefix: "KOH", count: 8 },
-  { name: "FlossieExecutive", prefix: "FE", count: 6 },
-  { name: "Safeera", prefix: "S", count: 6 },
-  { name: "Velvet", prefix: "VEL", count: 8 },
+  { name: "Kohinoor", prefix: "KOH", count: 20 },
+  { name: "FlossieExecutive", prefix: "FE", count: 20 },
+  { name: "Safeera", prefix: "SAF", count: 20 },
+  { name: "Velvet", prefix: "VEL", count: 20 },
+  { name: "Dastaan", prefix: "DAS", count: 20 },
 ];
+
+const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
+const colors = ["Black", "White", "Maroon", "Navy", "Emerald", "Gold", "Beige"];
+
+const getImages = (categoryName, isFav) => {
+  if (isFav && customerFavImages.length > 0) {
+    const shuffled = [...customerFavImages].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 2);
+  }
+
+  const imgs = categoryImages[categoryName];
+  if (imgs && imgs.length > 0) {
+    const shuffled = [...imgs].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 2);
+  }
+
+  return [
+    "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&auto=format&fit=crop&q=60",
+  ];
+};
 
 const seedProducts = async () => {
   try {
     await connectDataBase();
-    
-    console.log("Cleaning existing products...");
-    await Product.deleteMany({}); 
-    console.log("Database cleaned.");
 
-    const products = [];    
-    const colors = ["#000000", "#ffffff", "#8B4513", "#1a365d", "#701a75", "#0f172a"];
+    console.log("  Cleaning existing products...");
+    await Product.deleteMany({});
+    console.log(" Database cleaned.");
+
+    const products = [];
 
     for (const cat of categories) {
-      console.log(`Generating ${cat.name} products...`);
+      console.log(`  Generating ${cat.count} ${cat.name} products...`);
+
       for (let i = 1; i <= cat.count; i++) {
-        const code = cat.name === "Velvet" 
-          ? `${cat.prefix}-${String(i).padStart(2, "0")}`
-          : `${cat.prefix}-${i}`;
-        
-        const isFav = Math.random() > 0.7; // 30% chance
-        const isNew = Math.random() > 0.8; // 20% chance
-        const price = Math.floor(Math.random() * (25000 - 8000) + 8000); // 8k to 25k
-        const salePrice = Math.random() > 0.5 ? Math.floor(price * 0.85) : undefined; // 50% chance of sale
-        
+        const isFav = Math.random() > 0.7;
+        const isNew = Math.random() > 0.8;
+        const price = Math.floor(Math.random() * (25000 - 8000) + 8000);
+        const hasSale = Math.random() > 0.5;
+        const salePrice = hasSale ? Math.floor(price * 0.85) : null;
+
         products.push({
           name: `${cat.name} Luxury Collection ${i}`,
-          code,
+          code: `${cat.prefix}-${String(i).padStart(3, "0")}`,
           category: cat.name,
-          description: "Premium quality fabric with intricate embroidery and elegant design. Perfect for formal occasions and celebrations.",
+          description:
+            "Premium quality fabric with intricate embroidery and elegant design. Perfect for formal occasions and celebrations.",
           price,
           salePrice,
-          images: [dummyImages[Math.floor(Math.random() * dummyImages.length)]],
-          sizes: ["XS", "S", "M", "L", "XL"],
-          colors: [colors[Math.floor(Math.random() * colors.length)], colors[Math.floor(Math.random() * colors.length)]],
+          images: getImages(cat.name, isFav),
+          sizes: sizes.slice(0, Math.floor(Math.random() * 4) + 2),
+          colors: colors.slice(0, Math.floor(Math.random() * 3) + 1),
           stock: Math.floor(Math.random() * 50) + 5,
           isCustomerFavorite: isFav,
           isNewArrival: isNew,
-          isActive: true
         });
       }
     }
 
     await Product.insertMany(products);
-    console.log("Seeding complete! Added " + products.length + " products.");
-    process.exit();
+    console.log(`\n Seeding complete! ${products.length} products added.`);
+    categories.forEach((c) => console.log(`   ${c.name}: ${c.count} products`));
+    process.exit(0);
   } catch (error) {
-    console.error("Error seeding products:", error);
+    console.error(" Seed error:", error);
     process.exit(1);
   }
 };

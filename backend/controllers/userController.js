@@ -9,8 +9,6 @@ const generateToken = (id, email) => {
   return jwt.sign({ id, email }, process.env.JWT_SECRET, { expiresIn: "7d" });
 };
 
-// @desc    Register new user
-// @route   POST /api/users/register
 export const createUserController = async (req, res) => {
   console.log("REGISTER: Request received", { body: req.body });
   const { FirstName, LastName, Email, Password, Gender, role } = req.body;
@@ -108,8 +106,6 @@ export const createUserController = async (req, res) => {
   }
 };
 
-// @desc    Activate account
-// @route   GET /api/users/activate/:token
 export const activateAccountController = async (req, res) => {
   console.log("ACTIVATE_ACCOUNT: Request received", {
     token: req.params.token,
@@ -197,8 +193,6 @@ export const activateAccountController = async (req, res) => {
   }
 };
 
-// @desc    Login user
-// @route   POST /api/users/login
 export const userLoginController = async (req, res) => {
   console.log("LOGIN: Request received", { Email: req.body.Email });
   const { Email, Password } = req.body;
@@ -261,8 +255,6 @@ export const userLoginController = async (req, res) => {
   }
 };
 
-// @desc    Forgot Password - Send OTP
-// @route   POST /api/users/forgot-password
 export const updateUserController = async (req, res) => {
   console.log("FORGOT_PASSWORD: Request received", { Email: req.body.Email });
   const { Email } = req.body;
@@ -296,8 +288,6 @@ export const updateUserController = async (req, res) => {
   }
 };
 
-// @desc    Reset Password
-// @route   POST /api/users/reset-password
 export const resetPasswordController = async (req, res) => {
   console.log("RESET_PASSWORD: Request received", { Email: req.body.Email });
   const { Email, OTP, newPassword } = req.body;
@@ -325,8 +315,6 @@ export const resetPasswordController = async (req, res) => {
   }
 };
 
-// @desc    Get User Profile
-// @route   GET /api/users/profile
 export const getUserProfile = async (req, res) => {
   console.log("GET_PROFILE: Request received", { userId: req.user?.id });
   try {
@@ -359,8 +347,6 @@ export const getUserProfile = async (req, res) => {
   }
 };
 
-// @desc    Update User Profile
-// @route   PUT /api/users/profile
 export const updateUserProfile = async (req, res) => {
   console.log("UPDATE_PROFILE: Request received", {
     userId: req.user?.id,
@@ -405,8 +391,6 @@ export const updateUserProfile = async (req, res) => {
   }
 };
 
-// @desc    Get all orders from all users (Admin only)
-// @route   GET /api/users/all-orders
 export const getAllOrders = async (req, res) => {
   console.log("GET_ALL_ORDERS: Request received");
   try {
@@ -443,8 +427,6 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// @desc    Place Order
-// @route   POST /api/users/orders
 export const placeOrder = async (req, res) => {
   console.log("PLACE_ORDER: Request received", {
     userId: req.user?.id,
@@ -493,7 +475,6 @@ export const placeOrder = async (req, res) => {
   }
 };
 
-// @desc    Get User Orders
 export const getOrders = async (req, res) => {
   console.log("GET_ORDERS: Request received", { userId: req.user?._id });
   try {
@@ -515,8 +496,6 @@ export const getOrders = async (req, res) => {
   }
 };
 
-// @desc    Update Order Status (Admin only)
-// @route   PUT /api/users/order-status
 export const updateOrderStatus = async (req, res) => {
   console.log("UPDATE_ORDER_STATUS: Request received", { body: req.body });
   try {

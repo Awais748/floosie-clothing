@@ -1,0 +1,4 @@
+# .dockerignore  (dono frontend aur backend mein)
+node_modules
+.env
+.git
