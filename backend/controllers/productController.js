@@ -13,13 +13,24 @@ export const createProduct = async (req, res) => {
       .json({ success: false, message: "Failed to create product" });
   }
 };
-
 export const getAllProducts = async (req, res) => {
-  console.log("GET_ALL_PRODUCTS: Request received");
   try {
-    const products = await Product.find();
-    console.log(`GET_ALL_PRODUCTS: Found ${products.length} products`);
-    res.status(200).json({ success: true, data: products });
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 12);
+    const skip = (page - 1) * limit;
+
+    const [products, totalDocs] = await Promise.all([
+      Product.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Product.countDocuments(),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: products,
+      page,
+      pages: Math.ceil(totalDocs / limit),
+      total: totalDocs,
+    });
   } catch (error) {
     console.error("GET_ALL_PRODUCTS_ERROR:", error);
     res.status(500).json({ success: false, message: error.message });
