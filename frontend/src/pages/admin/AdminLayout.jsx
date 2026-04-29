@@ -95,7 +95,6 @@ const AdminLayout = () => {
           >
             {isManager ? "Manager Panel" : "Admin Panel"}
           </p>
-          Yeh fix karo aur product routes share karo — last step yahi hai.
         </div>
 
         <nav className="flex-1 p-4 space-y-1 mt-4">

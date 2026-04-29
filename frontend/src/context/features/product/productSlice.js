@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const HOME_CACHE_TTL_MS = 5 * 60 * 1000;
 
 export const fetchProducts = createAsyncThunk(
   "product/fetchProducts",
@@ -35,6 +36,8 @@ export const fetchProductById = createAsyncThunk(
   "product/fetchById",
   async (id, thunkAPI) => {
     try {
+      const cached = thunkAPI.getState().product.productById[id];
+      if (cached) return cached;
       const res = await axios.get(`${API_URL}/api/products/${id}`);
       console.log("FETCH_PRODUCT_BY_ID: Success", { id });
       return res.data.data;
@@ -45,6 +48,15 @@ export const fetchProductById = createAsyncThunk(
       });
       return thunkAPI.rejectWithValue("Failed to fetch product");
     }
+  },
+  {
+    condition: (id, { getState }) => {
+      const { productById, currentProduct } = getState().product;
+      if (productById[id] || currentProduct?._id === id) {
+        return false;
+      }
+      return true;
+    },
   }
 );
 
@@ -122,6 +134,13 @@ export const fetchHomeProducts = createAsyncThunk(
       );
       return thunkAPI.rejectWithValue("Failed to fetch home products");
     }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { homeFetchedAt } = getState().product;
+      if (!homeFetchedAt) return true;
+      return Date.now() - homeFetchedAt > HOME_CACHE_TTL_MS;
+    },
   }
 );
 
@@ -130,6 +149,7 @@ const productSlice = createSlice({
   initialState: {
     products: [],
     currentProduct: null,
+    productById: {},
     page: 1,
     totalPages: 1,
     totalProducts: 0,
@@ -143,6 +163,7 @@ const productSlice = createSlice({
       Dastaan: [],
     },
     lastQuery: null,
+    homeFetchedAt: null,
     loading: false,
     listLoading: false,
     error: null,
@@ -187,6 +208,9 @@ const productSlice = createSlice({
       .addCase(fetchProductById.fulfilled, (state, action) => {
         state.loading = false;
         state.currentProduct = action.payload;
+        if (action.payload?._id) {
+          state.productById[action.payload._id] = action.payload;
+        }
       })
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false;
@@ -200,6 +224,9 @@ const productSlice = createSlice({
       .addCase(createProduct.fulfilled, (state, action) => {
         state.loading = false;
         state.products.unshift(action.payload);
+        if (action.payload?._id) {
+          state.productById[action.payload._id] = action.payload;
+        }
         state.message = "Product created successfully";
       })
       .addCase(createProduct.rejected, (state, action) => {
@@ -220,6 +247,7 @@ const productSlice = createSlice({
         if (state.currentProduct?._id === action.payload._id) {
           state.currentProduct = action.payload;
         }
+        state.productById[action.payload._id] = action.payload;
         state.message = "Product updated successfully";
       })
       .addCase(updateProduct.rejected, (state, action) => {
@@ -234,6 +262,7 @@ const productSlice = createSlice({
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.loading = false;
         state.products = state.products.filter((p) => p._id !== action.payload);
+        delete state.productById[action.payload];
         state.message = "Product deleted successfully";
       })
       .addCase(deleteProduct.rejected, (state, action) => {
@@ -248,6 +277,7 @@ const productSlice = createSlice({
       .addCase(fetchHomeProducts.fulfilled, (state, action) => {
         state.loading = false;
         state.homeCollections = action.payload;
+        state.homeFetchedAt = Date.now();
       })
       .addCase(fetchHomeProducts.rejected, (state, action) => {
         state.loading = false;

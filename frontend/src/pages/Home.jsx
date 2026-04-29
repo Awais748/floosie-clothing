@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, memo, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { ArrowRight, Package, ShieldCheck } from "lucide-react";
+import { ArrowRight, Sparkles, Truck, ShieldCheck, MessageCircle } from "lucide-react";
 import { fetchHomeProducts } from "../context/features/product/productSlice";
 import HeroSection from "../components/HeroSection";
 import SectionHeading from "../components/SectionHeading";
@@ -84,42 +84,73 @@ const Home = memo(() => {
         ))}
       </div>
 
-      <section className="bg-stone-900 py-20 px-4 mt-24">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-          {[
-            {
-              icon: <Package size={24} className="text-white/80" />,
-              title: "Premium Craftsmanship",
-              desc: "Every piece handcrafted with meticulous attention to traditional artistry.",
-            },
-            {
-              icon: <ShieldCheck size={24} className="text-white/80" />,
-              title: "Verified Quality",
-              desc: "Rigorous checks ensure every garment meets our legacy of excellence.",
-            },
-            {
-              icon: <ArrowRight size={24} className="text-white/80" />,
-              title: "Global Delivery",
-              desc: "Bringing the essence of FLOSSIE to your doorstep, anywhere in the world.",
-            },
-          ].map((feature, i) => (
-            <div key={i} className="space-y-4 group">
-              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto group-hover:bg-white/10 transition-colors">
-                {feature.icon}
+      <section className="mt-24 px-4">
+        <div className="max-w-7xl mx-auto rounded-3xl bg-[#f8f4ef] border border-stone-200 p-8 md:p-12">
+          <div className="text-center max-w-3xl mx-auto">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-stone-500">
+              FLOSSIE EDIT
+            </p>
+            <h2 className="mt-3 font-serif text-3xl md:text-5xl text-stone-900 leading-tight">
+              Elegance That Feels Effortless
+            </h2>
+            <p className="mt-4 text-stone-600 text-sm md:text-base leading-relaxed">
+              Crafted for modern women who love timeless eastern wear, with graceful embroidery,
+              flattering cuts, and premium finishing in every piece.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-9">
+            {[
+              {
+                icon: <Sparkles size={16} className="text-stone-600" />,
+                title: "Fine Embroidery",
+                desc: "Elegant details inspired by timeless craft.",
+              },
+              {
+                icon: <ShieldCheck size={16} className="text-stone-600" />,
+                title: "Quality Checked",
+                desc: "Designed and reviewed for premium finish.",
+              },
+              {
+                icon: <Truck size={16} className="text-stone-600" />,
+                title: "Smooth Delivery",
+                desc: "Fast shipping with reliable order tracking.",
+              },
+              {
+                icon: <MessageCircle size={16} className="text-stone-600" />,
+                title: "Style Support",
+                desc: "Help with sizing, orders, and outfit guidance.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-2xl bg-white border border-stone-200 p-4 text-center hover:shadow-md transition-shadow"
+              >
+                <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center mx-auto">
+                  {item.icon}
+                </div>
+                <h3 className="mt-3 text-stone-900 text-sm font-semibold">{item.title}</h3>
+                <p className="mt-1 text-stone-600 text-xs leading-relaxed">{item.desc}</p>
               </div>
-              <h3 className="text-white text-xs font-black uppercase tracking-[0.25em]">
-                {feature.title}
-              </h3>
-              <p className="text-stone-400 text-[10px] tracking-widest leading-relaxed max-w-[240px] mx-auto">
-                {feature.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-20 pt-12 border-t border-white/5 text-center">
-          <p className="text-white/30 text-[9px] uppercase tracking-[0.5em] font-medium italic">
-            Crafting Luxury · Since 2024
-          </p>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              to="/shop-all"
+              className="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-3 text-xs font-bold uppercase tracking-[0.15em] hover:bg-stone-800 transition-colors"
+            >
+              Shop The Collection <ArrowRight size={15} />
+            </Link>
+            <a
+              href="https://wa.me/923084318888"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 border border-stone-300 text-stone-800 px-6 py-3 text-xs font-bold uppercase tracking-[0.15em] hover:bg-white transition-colors"
+            >
+              WhatsApp Us <MessageCircle size={15} />
+            </a>
+          </div>
         </div>
       </section>
     </div>
