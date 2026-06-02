@@ -69,38 +69,63 @@ export const getHomeProducts = async (req, res) => {
     const homeFields =
       "name code category price salePrice images stock isCustomerFavorite isNewArrival createdAt";
 
-    const [NewArrivals, CustomerFav, Kohinoor, FlossieExecutive, Dastaan] =
-      await Promise.all([
-        Product.find({ isNewArrival: true })
-          .select(homeFields)
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-        Product.find({ isCustomerFavorite: true })
-          .select(homeFields)
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-        Product.find({ category: "Kohinoor" })
-          .select(homeFields)
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-        Product.find({ category: "FlossieExecutive" })
-          .select(homeFields)
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-        Product.find({ category: "Dastaan" })
-          .select(homeFields)
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-      ]);
+    const [
+      NewArrivals,
+      CustomerFav,
+      Kohinoor,
+      FlossieExecutive,
+      Dastaan,
+      Safeera,
+      Velvet,
+    ] = await Promise.all([
+      Product.find({ isNewArrival: true })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ isCustomerFavorite: true })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "Kohinoor" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "FlossieExecutive" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "Dastaan" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "Safeera" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "Velvet" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+    ]);
 
     res.status(200).json({
       success: true,
-      data: { NewArrivals, CustomerFav, Kohinoor, FlossieExecutive, Dastaan },
+      data: {
+        NewArrivals,
+        CustomerFav,
+        Kohinoor,
+        FlossieExecutive,
+        Dastaan,
+        Safeera,
+        Velvet,
+      },
     });
   } catch (error) {
     console.error("HOME_API_ERROR:", error);

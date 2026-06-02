@@ -149,6 +149,13 @@ const cartSlice = createSlice({
       clearLocal();
       console.log("CLEAR_CART: Cart cleared");
     },
+
+    resetCart: (state) => {
+      state.items = [];
+      state.isOpen = false;
+      clearLocal();
+      console.log("RESET_CART: Cart reset on logout");
+    },
   },
 
   extraReducers: (builder) => {

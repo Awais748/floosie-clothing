@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { generateOTP } from "../utils/generateToken.js";
+import Product from "../models/ProductModel.js";
 import { sendEmail } from "../utils/sendEmails.js";
 
 const generateToken = (id, email) => {
@@ -441,6 +442,32 @@ export const placeOrder = async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
+
+    // Validate required fields
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Order items are required" });
+    }
+    if (!shippingDetails || !totalPrice) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Shipping details and total price are required",
+        });
+    }
+
+    // Decrement stock for each ordered item
+    const stockUpdates = items.map((item) =>
+      Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      )
+    );
+    await Promise.all(stockUpdates);
+    console.log("PLACE_ORDER: Stock decremented for", items.length, "items");
 
     const newOrder = {
       items,

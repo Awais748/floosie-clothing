@@ -52,6 +52,18 @@ const Home = memo(() => {
         data: homeCollections.CustomerFav,
         link: "/customer-fav", 
       },
+      {
+        title: "Safeera Collection",
+        subtitle: "Elegant Everyday",
+        data: homeCollections.Safeera,
+        link: "/safeera", 
+      },
+      {
+        title: "Velvet Collection",
+        subtitle: "Luxurious Touch",
+        data: homeCollections.Velvet,
+        link: "/velvet", 
+      },
     ],
     [homeCollections]
   );

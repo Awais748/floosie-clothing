@@ -47,7 +47,7 @@ function App() {
   useEffect(() => {
     if (user && user.role !== "admin" && user.role !== "manager") {
       const hasSynced = sessionStorage.getItem("cart_synced");
-      const localItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+      const localItems = JSON.parse(localStorage.getItem("cart_items")) || [];
 
       if (localItems.length > 0 && !hasSynced) {
         dispatch(syncCartDb(localItems)).then(() => {
@@ -98,50 +98,20 @@ function App() {
               element={!user ? <ForgotPassword /> : <Navigate to="/" />}
             />
 
-            <Route
-              path="/"
-              element={user ? <Home /> : <Navigate to="/login" />}
-            />
+            <Route path="/" element={<Home />} />
             <Route
               path="/profile"
               element={user ? <Profile /> : <Navigate to="/login" />}
             />
-            <Route
-              path="/new-arrival"
-              element={user ? <NewArrival /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/kohinoor"
-              element={user ? <Kohinoor /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/customer-fav"
-              element={user ? <CustomerFav /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/flossie-executive"
-              element={user ? <FlossieExecutive /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/safeera"
-              element={user ? <Safeera /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/velvet"
-              element={user ? <Velvet /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/dastaan"
-              element={user ? <Dastaan /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/shop-all"
-              element={user ? <Shopall /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/product/:id"
-              element={user ? <ProductDetails /> : <Navigate to="/login" />}
-            />
+            <Route path="/new-arrival" element={<NewArrival />} />
+            <Route path="/kohinoor" element={<Kohinoor />} />
+            <Route path="/customer-fav" element={<CustomerFav />} />
+            <Route path="/flossie-executive" element={<FlossieExecutive />} />
+            <Route path="/safeera" element={<Safeera />} />
+            <Route path="/velvet" element={<Velvet />} />
+            <Route path="/dastaan" element={<Dastaan />} />
+            <Route path="/shop-all" element={<Shopall />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
             <Route
               path="/checkout"
               element={user ? <Checkout /> : <Navigate to="/login" />}
@@ -201,7 +171,7 @@ function App() {
             {/* Backward compatibility for /dashboard */}
             <Route path="/dashboard" element={<Navigate to="/admin" />} />
 
-            <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </Suspense>
       </div>
