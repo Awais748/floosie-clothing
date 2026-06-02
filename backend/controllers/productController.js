@@ -1,5 +1,8 @@
 import Product from "../models/ProductModel.js";
 
+const LIST_FIELDS =
+  "name code category price salePrice images stock isCustomerFavorite isNewArrival createdAt";
+
 export const createProduct = async (req, res) => {
   console.log("CREATE_PRODUCT: Request received", { body: req.body });
   try {
@@ -18,10 +21,33 @@ export const getAllProducts = async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, parseInt(req.query.limit) || 12);
     const skip = (page - 1) * limit;
+    const query = {};
+
+    if (req.query.category) {
+      query.category = req.query.category;
+    }
+    if (req.query.newArrival === "true") {
+      query.isNewArrival = true;
+    }
+    if (req.query.customerFav === "true") {
+      query.isCustomerFavorite = true;
+    }
+    if (req.query.search?.trim()) {
+      const search = req.query.search.trim();
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { code: { $regex: search, $options: "i" } },
+      ];
+    }
 
     const [products, totalDocs] = await Promise.all([
-      Product.find().sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
-      Product.countDocuments(),
+      Product.find(query)
+        .select(LIST_FIELDS)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Product.countDocuments(query),
     ]);
 
     res.status(200).json({
@@ -38,43 +64,68 @@ export const getAllProducts = async (req, res) => {
 };
 
 export const getHomeProducts = async (req, res) => {
-  console.log("GET_HOME_PRODUCTS: Request received");
   try {
     const LIMIT = 4;
-    console.log("GET_HOME_PRODUCTS: Fetching all sections with limit", LIMIT);
+    const homeFields =
+      "name code category price salePrice images stock isCustomerFavorite isNewArrival createdAt";
 
-    const [NewArrivals, CustomerFav, Kohinoor, FlossieExecutive, Dastaan] =
-      await Promise.all([
-        Product.find({ isNewArrival: true })
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-        Product.find({ isCustomerFavorite: true }).limit(LIMIT).lean(),
-        Product.find({ category: "Kohinoor" })
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-        Product.find({ category: "FlossieExecutive" })
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-        Product.find({ category: "Dastaan" })
-          .sort({ createdAt: -1 })
-          .limit(LIMIT)
-          .lean(),
-      ]);
-
-    console.log("GET_HOME_PRODUCTS: Sections fetched", {
-      NewArrivals: NewArrivals.length,
-      CustomerFav: CustomerFav.length,
-      Kohinoor: Kohinoor.length,
-      FlossieExecutive: FlossieExecutive.length,
-      Dastaan: Dastaan.length,
-    });
+    const [
+      NewArrivals,
+      CustomerFav,
+      Kohinoor,
+      FlossieExecutive,
+      Dastaan,
+      Safeera,
+      Velvet,
+    ] = await Promise.all([
+      Product.find({ isNewArrival: true })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ isCustomerFavorite: true })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "Kohinoor" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "FlossieExecutive" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "Dastaan" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "Safeera" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+      Product.find({ category: "Velvet" })
+        .select(homeFields)
+        .sort({ createdAt: -1 })
+        .limit(LIMIT)
+        .lean(),
+    ]);
 
     res.status(200).json({
       success: true,
-      data: { NewArrivals, CustomerFav, Kohinoor, FlossieExecutive, Dastaan },
+      data: {
+        NewArrivals,
+        CustomerFav,
+        Kohinoor,
+        FlossieExecutive,
+        Dastaan,
+        Safeera,
+        Velvet,
+      },
     });
   } catch (error) {
     console.error("HOME_API_ERROR:", error);
@@ -85,18 +136,13 @@ export const getHomeProducts = async (req, res) => {
 };
 
 export const getProductById = async (req, res) => {
-  console.log("GET_PRODUCT_BY_ID: Request received", { id: req.params.id });
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).lean();
     if (!product) {
-      console.warn("GET_PRODUCT_BY_ID: Product not found", {
-        id: req.params.id,
-      });
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
-    console.log("GET_PRODUCT_BY_ID: Product found", product);
     res.status(200).json({ success: true, data: product });
   } catch (error) {
     console.error("GET_PRODUCT_ERROR:", error);

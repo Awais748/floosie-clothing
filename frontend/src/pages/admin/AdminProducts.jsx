@@ -9,25 +9,27 @@ import {
 import AdminProductForm from "./AdminProductForm";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
+const PRODUCTS_PER_PAGE = 20;
+
 const AdminProducts = () => {
   const dispatch = useDispatch();
-  const { products, listLoading, loading, message, error } = useSelector(
-    (state) => state.product
-  );
+  const { products, listLoading, loading, message, error, page, totalPages, totalProducts } =
+    useSelector((state) => state.product);
   const { user } = useSelector((state) => state.user);
   const isManager = user?.role === "manager";
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const didFetchRef = useRef(false);
 
   useEffect(() => {
     if (!didFetchRef.current) {
-      dispatch(fetchProducts());
+      dispatch(fetchProducts({ page: currentPage, limit: PRODUCTS_PER_PAGE }));
       didFetchRef.current = true;
     }
-  }, [dispatch]);
+  }, [dispatch, currentPage]);
 
   useEffect(() => {
     if (!message && !error) return;
@@ -55,8 +57,16 @@ const AdminProducts = () => {
     setShowForm(false);
     setEditingProduct(null);
     didFetchRef.current = false;
-    dispatch(fetchProducts());
+    dispatch(fetchProducts({ page: currentPage, limit: PRODUCTS_PER_PAGE }));
     didFetchRef.current = true;
+  };
+
+  const handlePageChange = (nextPage) => {
+    if (nextPage < 1 || nextPage > (totalPages || 1) || nextPage === currentPage) {
+      return;
+    }
+    didFetchRef.current = false;
+    setCurrentPage(nextPage);
   };
 
   const filteredProducts = useMemo(
@@ -91,6 +101,9 @@ const AdminProducts = () => {
           <p className="text-stone-500 text-xs sm:text-sm">
             Manage your collections and stock levels.
           </p>
+          <p className="text-stone-400 text-[11px] mt-1">
+            Total Products: <span className="font-bold text-stone-700">{totalProducts || 0}</span>
+          </p>
         </div>
         <button
           onClick={handleAddNew}
@@ -98,6 +111,29 @@ const AdminProducts = () => {
         >
           <Plus size={16} /> Add New Product
         </button>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 bg-white p-3 sm:p-4 rounded-xl border border-stone-100 shadow-sm">
+        <p className="text-xs text-stone-500">
+          Page <span className="font-semibold text-stone-700">{page || currentPage}</span> of{" "}
+          <span className="font-semibold text-stone-700">{totalPages || 1}</span>
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={listLoading || currentPage <= 1}
+            className="px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={listLoading || currentPage >= (totalPages || 1)}
+            className="px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-semibold text-stone-700 hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* Search */}

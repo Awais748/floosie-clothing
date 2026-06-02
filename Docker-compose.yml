@@ -28,11 +28,14 @@ services:
       - "5173:5173"
     volumes:
       - ./frontend:/app
-      - /app/node_modules      # ← FIX
+      - /app/node_modules     
     stdin_open: true
     tty: true
     depends_on:
       - backend
+    environment:
+      - VITE_BACKEND_URL=${VITE_BACKEND_URL}
 
 volumes:
   mongo_data:
+  
