@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { syncGuestFavorites, fetchFavorites, loadGuestFavorites } from "../wishlist/wishlistSlice";
 const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 
 export const register = createAsyncThunk(

@@ -62,6 +62,10 @@ const userModel = new Schema(
         quantity: { type: Number, default: 1 },
       },
     ],
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+  }],
   },
 
   { timestamps: true }
