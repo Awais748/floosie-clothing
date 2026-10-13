@@ -6,6 +6,8 @@ import Navbar from "./components/navbar";
 import Footer from "./components/Footer";
 import "./index.css";
 import { fetchCart, syncCartDb } from "./context/features/cart/cartSlice";
+import { fetchFavorites, loadGuestFavorites } from "./context/features/wishlist/wishlistSlice";
+import Chatbot from "./components/Chatbot";
 
 // Lazy loading pages
 const NewArrival = lazy(() => import("./pages/NewArrival"));
@@ -58,6 +60,15 @@ function App() {
       }
     } else {
       sessionStorage.removeItem("cart_synced");
+    }
+  }, [user, dispatch]);
+
+  // Load favorites on app boot
+  useEffect(() => {
+    if (user && user.role !== "admin" && user.role !== "manager") {
+      dispatch(fetchFavorites());
+    } else if (!user) {
+      dispatch(loadGuestFavorites());
     }
   }, [user, dispatch]);
 
@@ -176,6 +187,7 @@ function App() {
         </Suspense>
       </div>
       {!isAdminPage && !isAuthPage && <Footer />}
+      {!isAdminPage && <Chatbot />}
     </>
   );
 }

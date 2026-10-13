@@ -155,7 +155,7 @@ const Home = memo(() => {
               Shop The Collection <ArrowRight size={15} />
             </Link>
             <a
-              href="https://wa.me/923084318888"
+              href="https://wa.me/923022228021"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 border border-stone-300 text-stone-800 px-6 py-3 text-xs font-bold uppercase tracking-[0.15em] hover:bg-white transition-colors"

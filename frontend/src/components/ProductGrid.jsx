@@ -2,9 +2,14 @@ import React, { useEffect, memo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProducts } from "../context/features/product/productSlice";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Package, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Package, Plus, Heart } from "lucide-react";
 import { addToCart } from "../context/features/cart/cartSlice";
+import {
+  toggleGuestFavorite,
+  addFavoriteAPI,
+  removeFavoriteAPI,
+} from "../context/features/wishlist/wishlistSlice";
 import LoadingSpinner from "./common/LoadingSpinner";
 
 const categoryLabels = {
@@ -32,6 +37,27 @@ const ProductGrid = memo(
       page,
       totalPages,
     } = useSelector((state) => state.product);
+
+    const { user, token } = useSelector((state) => state.user);
+    const { favorites } = useSelector((state) => state.wishlist);
+
+    const isFavorited = (productId) => favorites.includes(productId);
+
+    const handleToggleFavorite = (e, productId) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (token) {
+        // Logged-in: toggle via API
+        if (isFavorited(productId)) {
+          dispatch(removeFavoriteAPI(productId));
+        } else {
+          dispatch(addFavoriteAPI(productId));
+        }
+      } else {
+        // Guest: toggle in localStorage
+        dispatch(toggleGuestFavorite(productId));
+      }
+    };
 
     const products = customProducts ?? reduxProducts;
 
@@ -171,6 +197,33 @@ const ProductGrid = memo(
                               </span>
                             )}
                         </div>
+
+                        {/* Heart / Wishlist button */}
+                        <motion.button
+                          onClick={(e) => handleToggleFavorite(e, product._id)}
+                          whileTap={{ scale: 0.85 }}
+                          className="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-200 group/heart cursor-pointer"
+                          aria-label={isFavorited(product._id) ? "Remove from wishlist" : "Add to wishlist"}
+                        >
+                          <motion.div
+                            animate={{ 
+                              scale: isFavorited(product._id) ? [1, 1.4, 1] : 1,
+                              color: isFavorited(product._id) ? "#ef4444" : "#a8a29e",
+                            }}
+                            transition={{ 
+                              duration: 0.4, 
+                              type: "spring", 
+                              bounce: 0.5 
+                            }}
+                            className="flex items-center justify-center"
+                          >
+                            <Heart 
+                              size={16} 
+                              className={`transition-colors duration-200 ${isFavorited(product._id) ? "fill-red-500 text-red-500" : "text-stone-400 group-hover/heart:text-red-400"}`} 
+                              strokeWidth={isFavorited(product._id) ? 0 : 2}
+                            />
+                          </motion.div>
+                        </motion.button>
 
                         <div className="absolute inset-x-2 bottom-2 md:inset-x-3 md:bottom-3 translate-y-0 md:translate-y-4 opacity-100 md:opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 z-10">
                           <button

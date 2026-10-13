@@ -6,6 +6,7 @@ import logo from "../assets/FLOSSIE_black_logo_6ba32254-9e65-4dab-a88a-b5d1b663f
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../context/features/user/userSlice";
 import { toggleCart, resetCart } from "../context/features/cart/cartSlice";
+import { clearWishlist } from "../context/features/wishlist/wishlistSlice";
 import CartDrawer from "./CartDrawer";
 
 const announcements = [
@@ -15,7 +16,6 @@ const announcements = [
 ];
 
 const Navbar = () => {
-
   const [open, setOpen] = useState(false);
   const [currentAnnoIndex, setCurrentAnnoIndex] = useState(0);
   const location = useLocation();
@@ -129,7 +129,7 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                <div 
+                <div
                   onClick={() => dispatch(toggleCart())}
                   className="relative cursor-pointer hover:opacity-70 transition-opacity"
                 >
@@ -206,6 +206,7 @@ const Navbar = () => {
                   onClick={() => {
                     dispatch(logout());
                     dispatch(resetCart());
+                    dispatch(clearWishlist());
                     setOpen(false);
                   }}
                   className="w-full py-3 bg-stone-900 text-white text-xs tracking-widest uppercase hover:bg-black transition-colors cursor-pointer"
@@ -232,4 +233,3 @@ const Navbar = () => {
 };
 
 export default memo(Navbar);
-

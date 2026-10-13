@@ -64,12 +64,12 @@ const Footer = () => {
               ))}
               <li>
                 <a
-                  href="https://wa.me/923084318888"
+                  href="https://wa.me/923022228021"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-block transition-all duration-200 hover:text-white hover:translate-x-1"
                 >
-                  WhatsApp: +92 308 4318888
+                  WhatsApp: +92 302 2228021
                 </a>
               </li>
               <li>
@@ -167,7 +167,7 @@ const Footer = () => {
       </footer>
 
       <a
-        href="https://wa.me/923084318888"
+        href="https://wa.me/923022228021"
         target="_blank"
         rel="noreferrer"
         className="fixed right-4 bottom-4 w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-xl hover:scale-105 hover:shadow-2xl transition-all duration-200 z-40"

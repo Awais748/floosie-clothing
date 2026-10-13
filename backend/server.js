@@ -5,6 +5,8 @@ import connectDataBase from "./Config/Database.js";
 import userRoutes from "./routes/userRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
+import chatbotRoutes from "./routes/chatbotRoutes.js";
 import cors from "cors";
 import compression from "compression";
 import path from "path";
@@ -39,6 +41,8 @@ connectDataBase();
 app.use("/api/users", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/chat", chatbotRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hellowwwwww world");
